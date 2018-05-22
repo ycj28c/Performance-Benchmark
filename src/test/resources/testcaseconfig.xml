@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<testCaseParameters>
+	<!-- ProxyProposalResultsTest -->
+	<!-- TSRCalculatorUITest -->
+	<testCaseParameter>
+		<fullMethodName>benchmark.business.TSRCalculatorUITest.TSRCalculatorPerformance</fullMethodName>
+		<simpleMethodName>TSRCalculatorPerformance</simpleMethodName>
+		<retryTimes>5</retryTimes>
+		<standardTime>20</standardTime>
+		<timeoutInSeconds>200</timeoutInSeconds>
+		<sleepInMillis>100</sleepInMillis>
+		<description>check the TSR calculator work flow loading time cost</description>
+	</testCaseParameter>
+</testCaseParameters>

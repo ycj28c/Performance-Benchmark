@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Security-Policy"
+	content="default-src * 'unsafe-inline' 'unsafe-eval'" />
+<title>{%titleKey%}</title>
+
+<!-- Latest compiled and minified CSS -->
+<link type="text/css" rel="stylesheet" href="../css/bootstrap.min.css" />
+<!-- Optional theme -->
+<link type="text/css" rel="stylesheet"
+	href="../css/bootstrap-theme.min.css" />
+
+<script type="text/javascript"
+	src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<!--script type="text/javascript" src="gstatic/loader.js"></script-->
+<!--script type="text/javascript" src="jquery.min.js"></script-->
+<script type="text/javascript">
+	//this is a good solve to get json without sync
+	/*function getJsonData(){
+		var value= $.ajax({ 
+			type: 'GET', 
+			url: "{%jsonKey%}.json", //htmlReportTemplate value
+			dataType: 'json',
+			async: false //not sychronize
+		}).responseText;
+		//return value;
+		return JSON.parse(value);
+	}*/
+	function getJsonData() {
+		var value = '{%jsonContent%}';
+		return JSON.parse(value);
+	}
+
+	/* set summary header value */
+	function setSummary(data) {
+		$('#summaryScore').html(data.adjustScore.toFixed(1));
+		$('#averageHistoryScore').html(data.averageHistoryScore.toFixed(1));
+		$('#minimumTime').html(data.minimumTime + 'ms');
+		$('#maximumTime').html(data.maximumTime + 'ms');
+		$('#averageTime').html(data.averageTime + 'ms');
+	}
+
+	$(document).ready(function() {
+		var data = getJsonData();
+		//console.log(data);
+
+		//setIPAddress
+		$('#timeLineTable tr th').html("Detail Log - ping " + data.ipAddress); //can also set in backend, either way if fine to me
+
+		//set detail log
+		$('#detailLog').html(data.pingDetail);
+
+		//set summary on the top
+		setSummary(data);
+	});
+</script>
+</head>
+
+<body>
+	<table id="generalInfo" class="table table-striped" width="100%"
+		style="table-layout: fixed">
+		<tr>
+			<th colspan='5' bgcolor='#99ccff'><span
+				class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+				SINGLE TEST RESULT - ({%environmentKey%}) - {%titleKey%}</th>
+		</tr>
+		<tr align="center">
+			<td align="center" valign="middle">Current Test Adjust Score</td>
+			<td align="center" valign="middle">History Average Score</td>
+			<td align="center" valign="middle">Minimum Time</td>
+			<td align="center" valign="middle">Maximum Time</td>
+			<td align="center" valign="middle">Average Time</td>
+		</tr>
+		<tr>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='summaryScore'></text> </g> </svg></td>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='averageHistoryScore'></text> </g> </svg></td>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='minimumTime'></text> </g> </svg></td>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='maximumTime'></text> </g> </svg></td>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='averageTime'></text> </g> </svg></td>
+		</tr>
+	</table>
+	<table id="timeLineTable" class="table table-bordered"
+		style="position: relative; top: -22px">
+		<tr bgcolor='#99ccff'>
+			<th>Detail Log - {%ipAddress%}</th>
+		</tr>
+		<tr>
+			<td align="left"><div
+					style="MARGIN-RIGHT: auto; MARGIN-LEFT: auto; width: 400px;"
+					id="detailLog"></div></td>
+		</tr>
+	</table>
+	<div align="center">
+		<a href='NetworkIndex.html'>Network Summary</a>
+	</div>
+</body>
+</html>

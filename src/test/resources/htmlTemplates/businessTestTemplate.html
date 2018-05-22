@@ -1,0 +1,263 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Security-Policy"
+	content="default-src * 'unsafe-inline' 'unsafe-eval'" />
+<title>{%titleKey%}</title>
+
+<!-- Latest compiled and minified CSS -->
+<link type="text/css" rel="stylesheet" href="../css/bootstrap.min.css" />
+<!-- Optional theme -->
+<link type="text/css" rel="stylesheet"
+	href="../css/bootstrap-theme.min.css" />
+
+<script type="text/javascript"
+	src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script type="text/javascript">
+	var isDetail = true; //is detail report or general report
+	var hasDetail = false;
+
+	google.charts.load('current', {'packages':['corechart', 'timeline']});
+	google.charts.setOnLoadCallback(drawChart);
+    google.charts.setOnLoadCallback(drawTimeMachine);
+	
+	var globalData = getJsonData(); //global data for one time json get
+
+	//this is a good solve to get json without sync
+	/*function getJsonData(){
+		var value= $.ajax({ 
+			type: 'GET', 
+			url: "{%jsonKey%}.json", //htmlReportTemplate value
+			dataType: 'json',
+			async: false //not sychronize
+		}).responseText;
+		//return value;
+		return JSON.parse(value);
+	}*/
+	
+	function getTimeMachineJsonData() {
+		var value = '{%jsonTimeMachine%}';
+		return JSON.parse(value);
+	}
+
+	function getJsonData() {
+		var value = '{%jsonContent%}';
+		if (value.includes("Page connection establish")) { //check if has the page load detail information, ugly hard code, lol
+			hasDetail = true;
+		}
+		return JSON.parse(value);
+	}
+
+	/* switch to general report or detail report, it simply remove first 11 timelineUnit records, emmm, change it if neccessary*/
+	function switchReport() {
+		if (isDetail) {
+			isDetail = false;
+			drawChart();
+			$('#switchreport').attr('value', 'Switch To Detail Report');
+		} else {
+			isDetail = true;
+			drawChart();
+			$('#switchreport').attr('value', 'Switch To General Report');
+		}
+		console.log("switch report");
+	}
+
+	/* if browser resize, resize the table too */
+	$(window).resize(function() {
+		console.log("resize windows");
+		drawChart();
+		drawTimeMachine();
+	});
+
+	/* set summary header value */
+	function setSummary(data) {
+		$('#summaryScore').html(data.adjustScore.toFixed(1));
+		$('#averageHistoryFirstAttScore').html(
+				data.averageHistoryFirstAttScore.toFixed(1));
+		$('#averageHistoryScore').html(data.averageHistoryScore.toFixed(1));
+		$('#lastFirstAttScore').html(data.lastFirstAttScore.toFixed(1));
+		$('#lastAttScroe').html(data.lastAttScroe.toFixed(1));
+	}
+
+	function drawChart() {
+		if (hasDetail) { //if has detail, show the switch button
+			$('#switchreport').show();
+		}
+		//var uiTestDetail = getJsonData();
+		var uiTestDetail = globalData;
+		var timeLineModalList = uiTestDetail.timeLineModalList;
+		setSummary(uiTestDetail);
+
+		$("tr[id*=timeLineItem]").remove(); //remove all tr which id contains "timeLineItem"
+		for ( var key in timeLineModalList) {
+			//var length = Object.keys(xxx[key]).length; //get how many keys in a json object
+			//var length = Object.keys(timeLineModalList[key].timeLineUnitList).length; //get how many keys in a json object
+			//var data = timeLineModalList[key];
+			//var duringSet = timeLineModalList[key].during;
+
+			var data = timeLineModalList[key];
+			var timelineunit = data.timeLineUnitList.slice();
+			if (!isDetail) {
+				timelineunit.splice(0, 11);
+			}
+			var length = Object.keys(timelineunit).length; //get how many keys in a json object
+			var duringSet = data.during;
+
+			/* generate the during set display */
+			var duringStr = "";
+			for ( var item in duringSet) {
+				duringStr += '<h5 class="list-group-item-heading" style="color:green">'
+						+ item + '</h5><p>' + duringSet[item] + ' seconds</p>';
+			}
+
+			$(
+					'<tr id="timeLineItem'+key+'">' + '<td>Attempt '
+							+ (parseInt(key) + 1) + '</td><td>'
+							+ '<div id="target' + key + '" style="height: '
+							+ (length * 46 + 45)
+							+ 'px;margin: -9px -9px -39px -9px;"></div></td>'
+							+ '<td>' + duringStr + '</td>' + '<td>'
+							+ data.standardTimeCost + ' seconds</td>' + '<td>'
+							+ data.score + ' points</td>' + '<td>'
+							+ data.status + '</td>' + '</tr>').appendTo(
+					"#timeLineTable");
+			var container = document.getElementById('target' + key);
+
+			var chart = new google.visualization.Timeline(container);
+			var dataTable = new google.visualization.DataTable();
+			dataTable.addColumn({
+				type : 'string',
+				id : 'ID'
+			});
+			dataTable.addColumn({
+				type : 'string',
+				id : 'Name'
+			});
+			dataTable.addColumn({
+				type : 'date',
+				id : 'Start'
+			});
+			dataTable.addColumn({
+				type : 'date',
+				id : 'End'
+			});
+
+			$.each(timelineunit, function(infoIndex, info) {
+				dataTable.addRows([ [ info["id"], info["name"],
+						new Date(info["start"]), new Date(info["end"]) ] ]);
+			})
+
+			var options = {
+				timeline : {
+					colorByRowLabel : true
+				},
+				backgroundColor : '#ffd'
+			};
+
+			//chart.clearChart();
+			chart.draw(dataTable, options);
+		}
+	}
+	
+	function drawTimeMachine() {
+		var data = new google.visualization.DataTable(
+				getTimeMachineJsonData()); //add new
+				
+		var options = {
+			title: 'Time Machine',
+			vAxis : {
+				title : 'Score',
+				viewWindow: {
+				  max:100,
+				  min:0
+				}
+			},
+			hAxis : {
+				title : 'Time',
+				textPosition: 'in'
+			},
+			curveType: 'object',
+			legend: { position: 'right' }
+		};
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+		$("#curve_chart").empty(); //for resize
+        chart.draw(data, options);
+    }
+</script>
+</head>
+
+<body>
+	<table id="generalInfo" class="table table-striped" width="100%"
+		style="table-layout: fixed">
+		<tr>
+			<th colspan='5' bgcolor='#99ccff'><span
+				class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+				SINGLE TEST RESULT - ({%environmentKey%}) - {%titleKey%} <input
+				type='button' style="color: red; display: none"
+				value='Switch To General Report' onclick="switchReport();"
+				id="switchreport" /></th>
+		</tr>
+		<tr align="center">
+			<td align="center" valign="middle">Current Test Adjust Score</td>
+			<td align="center" valign="middle">History Average First Attempt
+				Score</td>
+			<td align="center" valign="middle">History Average Score</td>
+			<td align="center" valign="middle">Last Test First Attempt Score</td>
+			<td align="center" valign="middle">Last Test Score</td>
+		</tr>
+		<tr>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='summaryScore'></text> </g> </svg></td>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='averageHistoryFirstAttScore'></text> </g> </svg></td>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='averageHistoryScore'></text> </g> </svg></td>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='lastFirstAttScore'></text> </g> </svg></td>
+			<td><svg xmlns="http://www.w3.org/2000/svg" width="100%">
+				<g> <circle cx="50%" cy="50%" r="30%" stroke="black"
+					stroke-width="0" fill="#ff9999" /> <text text x="50%" y="55%"
+					font-family="Verdana" font-size="30" fill="red"
+					text-anchor="middle" id='lastAttScroe'></text> </g> </svg></td>
+		</tr>
+		<th colspan='5' bgcolor='#99ccff'>
+			<span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
+			Time Machine - History Test Performance (Recent 15 Records)
+		</th>
+		<tr>
+			<td colspan='5' style="height: 200px;">
+				<div id="curve_chart" style="height: 100%"></div>
+			</td>
+		</tr>
+	</table>
+	<table id="timeLineTable" class="table table-bordered"
+		style="position: relative; top: -22px">
+		<tr bgcolor='#99ccff'>
+			<th style="width: 70px;">Attempt</th>
+			<th>Timeline</th>
+			<th style="width: 200px;">During</th>
+			<th style="width: 70px;">Goal</th>
+			<th style="width: 70px;">Score</th>
+			<th style="width: 70px;">Status</th>
+		</tr>
+	</table>
+	<div align="center">
+		<a href='BusinessIndex.html'>Business Summary</a>
+	</div>
+</body>
+</html>

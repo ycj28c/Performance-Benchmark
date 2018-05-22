@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Security-Policy"
+	content="default-src * 'unsafe-inline' 'unsafe-eval'" />
+<title>{%titleKey%}</title>
+
+<!-- Latest compiled and minified CSS -->
+<link type="text/css" rel="stylesheet" href="../css/bootstrap.min.css" />
+<!-- Optional theme -->
+<link type="text/css" rel="stylesheet"
+	href="../css/bootstrap-theme.min.css" />
+
+<script type="text/javascript"
+	src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script type="text/javascript">
+	google.charts.load('current', {
+		'packages' : [ 'corechart' ]
+	});
+	google.charts.setOnLoadCallback(drawVisualization);
+	var globalData = getJsonData(); //global data for one time json get
+
+	/* if browser resize, resize the table too */
+	$(window).resize(function() {
+		console.log("resize windows");
+		drawVisualization();
+	});
+
+	/* set summary header value */
+	function setSummary(data) {
+		$('#currentScore').html(data.currentScore);
+		$('#buildNumber').html("#" + data.buildNumber);
+	}
+
+	function drawVisualization() {
+		// Some raw data (not necessarily accurate)
+		/*var data = google.visualization.arrayToDataTable([
+				[ 'Build', 'Adjust Score', 'First Attempt Score', 'Avg Adjust Score' ], 
+				[ '#101', 450, 900,  380 ],
+				[ '#102', 288, 500, 380 ], [ '#103', 397, 600, 380 ],
+				[ '#104', 215, 400, 380 ], [ '#105', 366, 720, 380 ],
+				[ '#106', 378, 750, 380 ], [ '#107', 355, 650, 380 ],
+				[ '#108', 299, 800, 380 ], [ '#109', 466, 700, 380 ],
+				[ '#110', 144, 250, 380 ] ]);*/
+		var data = new google.visualization.DataTable(
+				getSummaryDiagramJsonData()); //add new
+
+		var options = {
+			title : 'Network Summary Score (Recent 15 Records)',
+			vAxis : {
+				title : 'Score'
+			},
+			hAxis : {
+				title : 'Build'
+			},
+			seriesType : 'bars',
+			series : {
+				1 : {
+					type : 'line'
+				}
+			}
+		};
+
+		var chart = new google.visualization.ComboChart(document
+				.getElementById('chart_div'));
+		$("#chart_div").empty(); //for resize
+		chart.draw(data, options);
+	}
+
+	$(document).ready(
+			function() {
+				//data = getJsonData();
+				var data = globalData;
+				//console.log(data);
+				var resultSet = data.singleTestList;
+				for ( var key in resultSet) {
+					//console.log(data[key]);
+					$(
+							'<tr id="item'+key+'">'
+									+ '<td><a href="'+resultSet[key].link+'">'
+									+ resultSet[key].name
+									+ '</a></td>'
+									+ '<td>'
+									+ resultSet[key].description
+									+ '</td>'
+									+ '<td>'
+									+ resultSet[key].pass
+									+ '</td>'
+									+ '<td>'
+									+ resultSet[key].fail
+									+ '</td>'
+									+ '<td>'
+									+ resultSet[key].total
+									+ '</td>'
+									+ '<td>'
+									+ resultSet[key].beginTime
+									+ '</td>'
+									+ '<td>'
+									+ resultSet[key].endTime
+									+ '</td>'
+									+ '<td>'
+									+ resultSet[key].adjustScore
+									+ '</td>' + '</tr>').appendTo(
+							"#summaryTable");
+				}
+				setSummary(data);
+			});
+
+	//this is a good solve to get json without sync
+	/*function getJsonData() {
+		var value = $.ajax({
+			type : 'GET',
+			url : "NetworkIndex.json",
+			dataType : 'json',
+			async : false
+		//not sychronize
+		}).responseText;
+		return JSON.parse(value);
+	}*/
+	function getJsonData() {
+		var value = '{%jsonContent%}';
+		return JSON.parse(value);
+	}
+
+	//get the json data for ui summary diagram
+	/*function getSummaryDiagramJsonData() {
+		var value = $.ajax({
+			type : 'GET',
+			url : "networkSummaryData.json",
+			dataType : 'json',
+			async : false
+		//not sychronize
+		}).responseText;
+		//return JSON.parse(value);
+		return value;
+	}*/
+	function getSummaryDiagramJsonData() {
+		var value = '{%jsonSummary%}';
+		return value;
+	}
+</script>
+</head>
+<body bgcolor="#FFF8DC">
+	<table id="generalInfo" class="table table-bordered">
+		<tr>
+			<th colspan='6' bgcolor='#28C469'>NETWORK SUMMARY REPORT -
+				({%environmentKey%})</th>
+		</tr>
+		<tr>
+			<th colspan='1' width="5%">Current Score</th>
+			<th colspan='1' width="5%">Build Number</th>
+			<th colspan='4' rowspan='2' style="height: 200px;"><div
+					id="chart_div" style="height: 100%"></div></th>
+		</tr>
+		<tr>
+			<td colspan='1' width="5%"><svg
+					xmlns="http://www.w3.org/2000/svg" width="80" height="160"> <g>
+				<circle cx="40" cy="70" r="40" stroke="black" stroke-width="0"
+					fill="#ff9999" /> <text x="40" y="80" font-family="Verdana"
+					font-size="20" fill="red" text-anchor="middle" id='currentScore'></text>
+				</g> </svg></td>
+			<td colspan='1' width="5%"><svg
+					xmlns="http://www.w3.org/2000/svg" width="80" height="160"> <g>
+				<circle cx="40" cy="70" r="40" stroke="black" stroke-width="0"
+					fill="#ff9999" /> <text x="40" y="80" font-family="Verdana"
+					font-size="20" fill="red" text-anchor="middle" id='buildNumber'></text>
+				</g> </svg></td>
+		</tr>
+	</table>
+	<table id="summaryTable" class="table table-bordered"
+		style="position: relative; top: -22px">
+		<!--table border='1' width='900' height='600' align='center'-->
+		<tr>
+			<th colspan='8' bgcolor='#28C469'></th>
+		</tr>
+		<tr>
+			<th>Test Name</th>
+			<th>Description</th>
+			<th style="width: 70px;">Pass</th>
+			<th style="width: 70px;">Fail</th>
+			<th style="width: 70px;">Total</th>
+			<th style="width: 90px;">Start Time</th>
+			<th style="width: 90px;">End Time</th>
+			<th style="width: 70px;">Score</th>
+		</tr>
+	</table>
+	<div align="center">
+		<!--a href='index.html'>Home Page</a-->
+	</div>
+</body>
+</html>

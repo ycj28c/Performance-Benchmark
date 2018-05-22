@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Security-Policy"
+	content="default-src * 'unsafe-inline' 'unsafe-eval'" />
+<title>{%titleKey%}</title>
+
+<!-- Latest compiled and minified CSS -->
+<link type="text/css" rel="stylesheet" href="../css/bootstrap.min.css" />
+<!-- Optional theme -->
+<link type="text/css" rel="stylesheet"
+	href="../css/bootstrap-theme.min.css" />
+
+<script type="text/javascript"
+	src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script type="text/javascript">
+	var globalData = '{%jsonContent%}';
+	console.log(globalData);
+
+	$(document).ready(
+		function() {
+			//data = getJsonData();
+			try {
+				var json_parsed = $.parseJSON(globalData);
+			}
+			catch(err) {
+				document.body.innerHTML = '<div style="font-size:30px;color:red">Not Enough Data</div>';
+			}
+			//console.log(data);
+			var beforelastJson = json_parsed.beforeLast;
+			var previousJson = json_parsed.previous;
+			var currentJson = json_parsed.current;
+			if(beforelastJson==null||previousJson==null||currentJson==null){
+				$("#timeMachineCompare").remove();
+				document.body.innerHTML = '<div style="font-size:30px;color:red">Not Enough Data</div>';
+				return;
+			}
+			//var resultSet = data.beforeLast;
+			var resultTR = '';
+			for ( var key in beforelastJson) {
+				//before last
+				resultTR = resultTR + '<tr id="item'+key+'">'
+					+ '<td style="word-wrap:break-word">' + beforelastJson[key].test_name +' </td>'
+					+ '<td>' + beforelastJson[key].result_key +' </td>'
+					+ '<td>' + beforelastJson[key].median.toFixed(2) + '</td>'	
+					+ '<td>' + beforelastJson[key].max.toFixed(2) + '</td>';
+				
+				//previous
+				resultTR += '<td>' + previousJson[key].median.toFixed(2) + '</td>'	
+				if(beforelastJson[key].median == -99999999 || previousJson[key].median == -99999999){
+					resultTR += '<td>N/A</td>';
+				} else {
+					var cal = Math.round((beforelastJson[key].median - previousJson[key].median)/beforelastJson[key].median*100).toFixed(2);
+					if(cal<0){
+						resultTR += '<td style="color:red">'+cal+'%</td>';
+					} else {
+						resultTR += '<td style="color:green">'+cal+'%</td>';
+					}
+				}
+				resultTR += '<td>' + previousJson[key].max.toFixed(2) + '</td>'
+				if(beforelastJson[key].max == -99999999 || previousJson[key].max == -99999999){
+					resultTR += '<td>N/A</td>';
+				} else {
+					var cal = Math.round((beforelastJson[key].max - previousJson[key].max)/beforelastJson[key].max*100).toFixed(2);
+					if(cal<0){
+						resultTR += '<td style="color:red">'+cal+'%</td>';
+					} else {
+						resultTR += '<td style="color:green">'+cal+'%</td>';
+					}
+				}
+				
+				//current
+				resultTR += '<td>' + currentJson[key].median.toFixed(2) + '</td>'	
+				if(currentJson[key].median == -99999999 || previousJson[key].median == -99999999){
+					resultTR += '<td>N/A</td>';
+				} else {
+					var cal = Math.round((previousJson[key].median - currentJson[key].median)/previousJson[key].median*100).toFixed(2);
+					if(cal<0){
+						resultTR += '<td style="color:red">'+cal+'%</td>';
+					} else {
+						resultTR += '<td style="color:green">'+cal+'%</td>';
+					}
+				}
+				resultTR += '<td>' + currentJson[key].max.toFixed(2) + '</td>'
+				if(currentJson[key].max == -99999999 || previousJson[key].max == -99999999){
+					resultTR += '<td>N/A</td>';
+				} else {
+					var cal = Math.round((previousJson[key].max - currentJson[key].max)/previousJson[key].max*100).toFixed(2);
+					if(cal<0){
+						resultTR += '<td style="color:red">'+cal+'%</td>';
+					} else {
+						resultTR += '<td style="color:green">'+cal+'%</td>';
+					}
+				}				
+			}
+			
+		console.log(resultTR);	
+		$(resultTR).appendTo("#timeMachineCompare");
+
+		changeNAText();
+	});
+
+	/* change the -99999999 number to N/A */
+	function changeNAText() {
+		$("#timeMachineCompare td").each(function () {
+			val = $(this).html();
+			if(val == -99999999 || val == -99999999.00){
+				$(this).html("N/A");
+			}
+		})
+	};
+			
+</script>
+</head>
+<body bgcolor="#FFF8DC">
+	<table id="timeMachineCompare" class="table table-striped table-bordered" style="position: relative; top: 0px; table-layout: fixed">
+		<!--table border='1' width='900' height='600' align='center'-->
+		<tr>
+			<th colspan='12' bgcolor='#28C469'><a href="BusinessIndex.html"><< Back To Business Summary</a></th>
+		</tr>
+		<tr>
+			<th colspan='2'></th>
+			<th colspan='2'>{%beforeLastDate%}</th>
+			<th colspan='4'>{%previousDate%}</th>
+			<th colspan='4'>{%currentDate%}</th>
+		</tr>
+		<tr>
+			<th>Test Name</th>
+			<th>Benchmark Metrics</th>
+			<th>Median Time (seconds)</th>
+			<th>Max Time (seconds)</th>
+			<th>Median Time (seconds)</th>
+			<th>Compare to Previous</th>
+			<th>Max Time (seconds)</th>
+			<th>Compare to Previous</th>
+			<th>Median Time (seconds)</th>
+			<th>Compare to Previous</th>
+			<th>Max Time (seconds)</th>
+			<th>Compare to Previous</th>
+		</tr>
+	</table>
+	<div align="center">
+		<a href="BusinessIndex.html">Business Summary</a>
+	</div>
+</body>
+</html>
